@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MimiEats | Buyer Edition</title>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&family=Righteous&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-pink: #fff0f5;
+            --hot-pink: #f06292;
+            --deep-pink: #f48fb1; 
+            --soft-orange: #ffcc80;
+            --mobile-width: 430px;
+        }
+
+        html { background-color: #333; display: flex; justify-content: center; margin: 0; }
+        body {
+            font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg-pink);
+            width: 100%; max-width: var(--mobile-width); height: 100vh;
+            display: flex; flex-direction: column; overflow: hidden; position: relative;
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+        }
+
+        header {
+            background: linear-gradient(135deg, #ffdee9 0%, #fff9ae 100%); 
+            padding: 15px 0 0 0; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05); z-index: 10;
+        }
+
+        .orders-btn {
+            position: absolute; top: 15px; right: 15px; background: var(--hot-pink); color: white; 
+            padding: 8px 15px; border-radius: 50px; font-weight: 800; border: none; font-size: 0.75rem;
+        }
+
+        .logo-container h1 {
+            margin: 0; font-family: 'Righteous', cursive; font-size: 2.2rem;
+            background: linear-gradient(135deg, #ff8da1 0%, #fbc531 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        .marquee-highlight { background: var(--hot-pink); color: white; padding: 8px 0; margin-top: 10px; overflow: hidden; }
+        .marquee-content { display: inline-block; white-space: nowrap; animation: marquee 15s linear infinite; font-weight: 800; font-size: 0.7rem; letter-spacing: 1px; }
+        
+        @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+
+        /* BAGIAN YANG KAMU MINTA: CURSOR POINTER */
+        .sidebar {
+            background: var(--deep-pink); padding: 10px;
+            display: flex; gap: 8px; overflow-x: auto; white-space: nowrap;
+            scrollbar-width: none;
+        }
+        .sidebar::-webkit-scrollbar { display: none; }
+        .filter-chip {
+            background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255,255,255,0.4); 
+            padding: 6px 14px; border-radius: 50px; color: white; font-weight: 600; font-size: 0.75rem;
+            cursor: pointer !important; /* INI DIA BIAR JADI TELUNJUK */
+            transition: 0.2s;
+        }
+        .filter-chip:hover { background: white; color: var(--hot-pink); }
+
+        .chat-section { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+        #results-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 15px; padding-bottom: 100px; scroll-behavior: smooth; }
+
+        .bubble-wrapper { display: flex; align-items: flex-end; gap: 8px; animation: popIn 0.3s; width: 100%; }
+        .avatar { width: 30px; height: 30px; border-radius: 50%; background: white; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
+        .bot-response-text { background: white; padding: 10px 14px; border-radius: 15px 15px 15px 4px; font-size: 0.85rem; max-width: 80%; border: 1px solid #eee; }
+        .user-query-bubble { background: var(--hot-pink); color: white; padding: 10px 14px; border-radius: 15px 15px 4px 15px; font-size: 0.85rem; max-width: 80%; margin-left: auto; }
+
+        .card { background: white; border-radius: 15px; padding: 12px; border: 1px solid #fce4ec; display: flex; flex-direction: column; gap: 8px; }
+        .price-info { display: flex; justify-content: space-between; align-items: flex-start; }
+        .price-detail { font-size: 0.65rem; color: #888; line-height: 1.3; }
+        .total-price { font-weight: 800; color: #ad1457; font-size: 0.95rem; }
+
+        .action-area { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f9f9f9; padding-top: 8px; }
+        .qty-wrapper { display: none; align-items: center; gap: 12px; }
+        .qty-btn { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #28a745; background: white; color: #28a745; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .btn-order { background: var(--soft-orange); color: #5d4037; border: none; padding: 6px 20px; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 0.85rem; }
+
+        .input-container { position: absolute; bottom: 15px; left: 5%; width: 90%; background: white; padding: 4px; border-radius: 50px; display: flex; box-shadow: 0 5px 20px rgba(0,0,0,0.1); box-sizing: border-box; }
+        .input-container input { flex: 1; border: none; padding: 10px 15px; outline: none; font-size: 0.85rem; }
+        .btn-find { background: var(--hot-pink); color: white; border: none; padding: 0 15px; border-radius: 50px; font-weight: 800; cursor: pointer; }
+
+        #send-final-container { position: absolute; bottom: 75px; right: 20px; display: none; z-index: 100; }
+        .btn-send-all { background: #4caf50; color: white; border: none; padding: 10px 18px; border-radius: 50px; font-weight: 800; box-shadow: 0 4px 10px rgba(0,0,0,0.2); cursor: pointer; font-size: 0.85rem; }
+
+        @keyframes popIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+<header>
+    <button class="orders-btn">Orders: <span id="order-count">0</span></button>
+    <div class="logo-container"><h1>MimiEats</h1></div>
+    <div class="marquee-highlight">
+        <div class="marquee-content">
+            FINDING THE SWEETEST PRICES FOR YOU 🌸 FINDING THE SWEETEST PRICES FOR YOU 🌸 FINDING THE SWEETEST PRICES FOR YOU 🌸
+        </div>
+    </div>
+</header>
+
+<div class="sidebar">
+    <div class="filter-chip" onclick="quickSearch('Nasi Goreng')">🍳 Nasi Goreng</div>
+    <div class="filter-chip" onclick="quickSearch('Ayam Bakar')">🍗 Ayam Bakar</div>
+    <div class="filter-chip" onclick="quickSearch('Mie Ayam')">🍜 Mie Ayam</div>
+    <div class="filter-chip" onclick="quickSearch('Seblak')">🔥 Seblak</div>
+    <div class="filter-chip" onclick="quickSearch('Nasi Padang')">🍱 Nasi Padang</div>
+</div>
+
+<div class="chat-section">
+    <div id="results-area"></div>
+    <div class="input-container">
+        <input type="text" id="main-search" placeholder="What to eat?" onkeypress="if(event.key==='Enter')runSearch()">
+        <button class="btn-find" onclick="runSearch()">Find</button>
+    </div>
+</div>
+
+<div id="send-final-container">
+    <button class="btn-send-all" onclick="finalizeOrder()">Order Now 🚀</button>
+</div>
+
+<script>
+    let foodData = [];
+    let pendingOrders = []; 
+    let lastMsgCount = 0;
+    const beepSound = new Audio('https://assets.mixkit.co/active_storage/sfx/3005/3005-preview.mp3');
+
+    async function loadData() {
+        try { const res = await fetch('data.php'); foodData = await res.json(); } catch (e) {}
+    }
+
+    async function checkNewMessages() {
+        try {
+            const res = await fetch('api.php');
+            const data = await res.json();
+            const area = document.getElementById('results-area');
+            
+            if (data.length > lastMsgCount) {
+                const isAtBottom = area.scrollHeight - area.scrollTop <= area.clientHeight + 100;
+                const newMsgs = data.slice(lastMsgCount);
+                
+                newMsgs.forEach(msg => {
+                    if (msg.sender === 'Seller') {
+                        addBotMessage(`<b>Seller:</b> ${msg.message}`, "🏪");
+                    }
+                });
+                lastMsgCount = data.length;
+                if (isAtBottom) area.scrollTop = area.scrollHeight;
+            }
+        } catch (e) {}
+    }
+    setInterval(checkNewMessages, 2000);
+
+    window.onload = async () => {
+        await loadData();
+        addBotMessage("Hi dear! I'm Mimi. 🌸 Ready to eat?", "🌸");
+    };
+
+    function addBotMessage(text, avatarIcon) {
+        if(avatarIcon === "🌸") beepSound.play().catch(() => {}); 
+        const area = document.getElementById('results-area');
+        const div = document.createElement('div');
+        div.className = 'bubble-wrapper bot-wrapper';
+        div.innerHTML = `<div class="avatar">${avatarIcon}</div><div class="bot-response-text">${text}</div>`;
+        area.appendChild(div);
+        area.scrollTop = area.scrollHeight;
+    }
+
+    function runSearch() {
+        const input = document.getElementById('main-search');
+        const query = input.value.trim();
+        if(!query) return;
+        const area = document.getElementById('results-area');
+        const userDiv = document.createElement('div');
+        userDiv.className = 'user-query-bubble';
+        userDiv.innerText = query;
+        area.appendChild(userDiv);
+        
+        let filtered = foodData.filter(f => f.name.toLowerCase().includes(query.toLowerCase()));
+        input.value = "";
+
+        setTimeout(() => {
+            if(filtered.length === 0) {
+                addBotMessage(`Sorry dear, no results. 🎀`, "🌸");
+            } else {
+                addBotMessage(`Results for <b>${query}</b>:`, "🌸");
+                filtered.forEach(item => {
+                    const total = item.base + item.fee;
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.innerHTML = `
+                        <div class="price-info">
+                            <div>
+                                <div style="font-weight:800; color:var(--hot-pink)">${item.shop}</div>
+                                <div style="font-size:0.8rem">${item.name}</div>
+                                <div class="price-detail">Base: ${item.base.toLocaleString()} | Fee: ${item.fee.toLocaleString()}</div>
+                            </div>
+                            <div class="total-price">Rp ${total.toLocaleString()}</div>
+                        </div>
+                        <div class="action-area">
+                            <div class="qty-wrapper">
+                                <button class="qty-btn" onclick="changeQty(this, -1, '${item.name}', '${item.shop}')">-</button>
+                                <span class="qty-num">1</span>
+                                <button class="qty-btn" onclick="changeQty(this, 1, '${item.name}', '${item.shop}')">+</button>
+                            </div>
+                            <button class="btn-order" onclick="initialOrder(this, '${item.name}', '${item.shop}')">Order</button>
+                        </div>`;
+                    area.appendChild(card);
+                });
+            }
+            area.scrollTop = area.scrollHeight;
+        }, 500);
+    }
+
+    function changeQty(btn, delta, name, shop) {
+        const span = btn.parentElement.querySelector('.qty-num');
+        let newVal = parseInt(span.innerText) + delta;
+        if (newVal < 1) {
+            btn.parentElement.style.display = 'none';
+            btn.parentElement.nextElementSibling.style.display = 'block';
+            removeFromCart(name, shop);
+            return;
+        }
+        span.innerText = newVal;
+        if (delta > 0) addToCartLogic(name, shop);
+        else removeFromCart(name, shop);
+    }
+
+    function initialOrder(btn, name, shop) {
+        btn.style.display = 'none';
+        btn.previousElementSibling.style.display = 'flex';
+        addToCartLogic(name, shop);
+        addBotMessage(`Added <b>${name}</b>. 🛒`, "🌸");
+    }
+
+    function addToCartLogic(name, shop) { pendingOrders.push({name, shop}); updateUI(); }
+    function removeFromCart(name, shop) {
+        const index = pendingOrders.findLastIndex(o => o.name === name && o.shop === shop);
+        if (index > -1) pendingOrders.splice(index, 1);
+        updateUI();
+    }
+    function updateUI() {
+        document.getElementById('order-count').innerText = pendingOrders.length;
+        document.getElementById('send-final-container').style.display = pendingOrders.length > 0 ? 'block' : 'none';
+    }
+
+    async function finalizeOrder() {
+        const grouped = pendingOrders.reduce((acc, curr) => {
+            const key = `${curr.name} (${curr.shop})`;
+            acc[key] = (acc[key] || 0) + 1;
+            return acc;
+        }, {});
+        let summary = "Order:\n" + Object.entries(grouped).map(([it, q]) => `- ${q}x ${it}`).join("\n");
+        const formData = new FormData();
+        formData.append('sender', 'Buyer');
+        formData.append('message', summary);
+        await fetch('api.php', { method: 'POST', body: formData });
+        addBotMessage("Sent! ✨", "🌸");
+        pendingOrders = []; updateUI();
+    }
+
+    function quickSearch(v) { document.getElementById('main-search').value = v; runSearch(); }
+</script>
+</body>
+</html>
