@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MimiEats | Smart Buyer AI</title>
+    
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&family=Righteous&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+        :root { --bg-pink: #fff0f5; --hot-pink: #f06292; --deep-pink: #f48fb1; --soft-orange: #ffcc80; --mobile-width: 430px; }
+        html { background-color: #333; display: flex; justify-content: center; margin: 0; }
+        body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg-pink); width: 100%; max-width: var(--mobile-width); height: 100vh; display: flex; flex-direction: column; overflow: hidden; position: relative; box-shadow: 0 0 50px rgba(0,0,0,0.5); }
+        
+        header { background: linear-gradient(135deg, #ffdee9 0%, #fff9ae 100%); padding: 15px 0 0 0; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05); z-index: 10; position: relative; }
+        .orders-btn { position: absolute; top: 15px; right: 15px; background: var(--hot-pink); color: white; padding: 8px 15px; border-radius: 50px; font-weight: 800; border: none; font-size: 0.75rem; cursor: pointer; }
+        .hist-btn { position: absolute; top: 15px; left: 15px; background: #9c27b0; color: white; padding: 8px 15px; border-radius: 50px; font-weight: 800; border: none; font-size: 0.75rem; cursor: pointer; }
+        
+        .logo-container h1 { margin: 0; font-family: 'Righteous', cursive; font-size: 2.2rem; background: linear-gradient(135deg, #ff8da1 0%, #fbc531 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .marquee-highlight { background: var(--hot-pink); color: white; padding: 8px 0; margin-top: 10px; overflow: hidden; }
+        .marquee-content { display: inline-block; white-space: nowrap; animation: marquee 15s linear infinite; font-weight: 800; font-size: 0.7rem; letter-spacing: 1px; }
+        @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+        
+        .sidebar { background: var(--deep-pink); padding: 10px; display: flex; gap: 8px; overflow-x: auto; white-space: nowrap; scrollbar-width: none; }
+        .filter-chip { background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255,255,255,0.4); padding: 6px 14px; border-radius: 50px; color: white; font-weight: 600; font-size: 0.75rem; cursor: pointer; transition: 0.3s; }
+        .filter-chip:hover { background: white; color: var(--hot-pink); }
+
+        .chat-section { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+        #results-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 15px; padding-bottom: 110px; scroll-behavior: smooth; }
+        
+        .bubble-wrapper { display: flex; align-items: flex-end; gap: 8px; animation: popIn 0.3s; width: 100%; }
+        .avatar { width: 30px; height: 30px; border-radius: 50%; background: white; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .bot-response-text { background: white; padding: 10px 14px; border-radius: 15px 15px 15px 4px; font-size: 0.85rem; max-width: 80%; border: 1px solid #eee; line-height: 1.4; }
+        .user-query-bubble { background: var(--hot-pink); color: white; padding: 10px 14px; border-radius: 15px 15px 4px 15px; font-size: 0.85rem; max-width: 80%; margin-left: auto; align-self: flex-end; box-shadow: 0 2px 8px rgba(240, 98, 146, 0.3); }
+        
+        .map-container { height: 180px; width: 100%; border-radius: 15px; margin: 5px 0; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.1); z-index: 1; }
+        
+        .card { background: white; border-radius: 15px; padding: 12px; border: 1px solid #fce4ec; display: flex; flex-direction: column; gap: 8px; animation: popIn 0.4s; }
+        .total-price { font-weight: 800; color: #ad1457; font-size: 0.95rem; }
+        
+        .input-container { position: absolute; bottom: 15px; left: 5%; width: 90%; background: white; padding: 4px; border-radius: 50px; display: flex; box-shadow: 0 5px 20px rgba(0,0,0,0.15); box-sizing: border-box; z-index: 20; }
+        .input-container input { flex: 1; border: none; padding: 12px 18px; outline: none; font-size: 0.85rem; background: transparent; }
+        .btn-find { background: var(--hot-pink); color: white; border: none; padding: 0 20px; border-radius: 50px; font-weight: 800; cursor: pointer; transition: 0.2s; }
+        .btn-find:active { transform: scale(0.9); }
+
+        #send-final-container { position: absolute; bottom: 85px; right: 20px; display: none; z-index: 100; }
+        .btn-send-all { background: #4caf50; color: white; border: none; padding: 12px 20px; border-radius: 50px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4); }
+        
+        .qty-wrapper { display: none; align-items: center; gap: 12px; }
+        .qty-btn { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #28a745; background: white; color: #28a745; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .btn-order { background: var(--soft-orange); color: #5d4037; border: none; padding: 8px 20px; border-radius: 12px; font-weight: 700; cursor: pointer; }
+
+        @keyframes popIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+<header>
+    <button class="hist-btn" onclick="showHistory()">📜 History</button>
+    <button class="orders-btn">Basket: <span id="order-count">0</span></button>
+    <div class="logo-container"><h1>MimiEats</h1></div>
+    <div class="marquee-highlight">
+        <div class="marquee-content">CRAVING SOMETHING DELICIOUS? MIMI IS HERE! 🌸 CRAVING SOMETHING DELICIOUS? MIMI IS HERE! 🌸</div>
+    </div>
+</header>
+
+<div class="sidebar">
+    <div class="filter-chip" onclick="quickSearch('Nasi Goreng')">🍳 Nasi Goreng</div>
+    <div class="filter-chip" onclick="quickSearch('Mie Ayam')">🍜 Mie Ayam</div>
+    <div class="filter-chip" onclick="quickSearch('something sweet')">🍰 Sweet Treats</div>
+    <div class="filter-chip" onclick="quickSearch('cheap food')">💸 Cheapest</div>
+</div>
+
+<div class="chat-section">
+    <div id="results-area"></div>
+    <div class="input-container">
+        <input type="text" id="main-search" placeholder="What's on your mind? (ex: Spicy Nasi Goreng)" onkeypress="if(event.key==='Enter')runSearch()">
+        <button class="btn-find" onclick="runSearch()">Find</button>
+    </div>
+</div>
+
+<div id="send-final-container"><button class="btn-send-all" onclick="finalizeOrder()">Checkout Now 🚀</button></div>
+
+<script>
+    let foodData = [];
+    let pendingOrders = []; 
+    let lastMsgCount = 0;
+    const area = document.getElementById('results-area');
+    const beepSound = new Audio('https://assets.mixkit.co/active_storage/sfx/3005/3005-preview.mp3');
+
+    async function loadData() {
+        try { const res = await fetch('data.php'); foodData = await res.json(); } catch (e) { console.error("Error loading data"); }
+    }
+
+    // --- MIMI AI BRAIN ---
+    function mimiAI(query) {
+        const input = query.toLowerCase();
+        let result = { found: [], flavorText: "" };
+
+        if (input.includes("sweet") || input.includes("manis")) {
+            result.found = foodData.filter(f => ["Seblak", "Mie Ayam", "Nasi Padang"].every(x => !f.name.includes(x))); // Filter logic manis
+            result.flavorText = "something sweet and lovely";
+        } else if (input.includes("cheap") || input.includes("murah")) {
+            result.found = [...foodData].sort((a,b) => (a.base + a.fee) - (b.base + b.fee)).slice(0, 3);
+            result.flavorText = "the absolute cheapest deals";
+        } else if (input.includes("spicy") || input.includes("pedas")) {
+            result.found = foodData.filter(f => f.name.includes("Seblak") || f.name.includes("Nasi Goreng"));
+            result.flavorText = "something with a spicy kick";
+        } else {
+            result.found = foodData.filter(f => input.includes(f.name.toLowerCase()) || f.name.toLowerCase().includes(input));
+        }
+        return result;
+    }
+
+    async function checkNewMessages() {
+        try {
+            const res = await fetch('api.php');
+            const data = await res.json();
+            if (data.length > lastMsgCount) {
+                const newMsgs = data.slice(lastMsgCount);
+                newMsgs.forEach(msg => {
+                    if (msg.sender === 'Seller') addBotMessage(`<b>Seller response:</b> ${msg.message}`, "🏪");
+                });
+                lastMsgCount = data.length;
+            }
+        } catch (e) {}
+    }
+    setInterval(checkNewMessages, 3000);
+
+    window.onload = async () => { 
+        await loadData(); 
+        addBotMessage("Hi dear! Mimi is ready to find the best food for you. 🌸 You can type a menu name or tell me if you want something <b>spicy, sweet, or cheap!</b>", "🌸"); 
+    };
+
+    function addBotMessage(text, avatarIcon) {
+        const div = document.createElement('div');
+        div.className = 'bubble-wrapper';
+        div.innerHTML = `<div class="avatar">${avatarIcon}</div><div class="bot-response-text">${text}</div>`;
+        area.appendChild(div);
+        area.scrollTop = area.scrollHeight;
+        if(avatarIcon === "🌸") beepSound.play().catch(() => {});
+    }
+
+    function runSearch() {
+        const input = document.getElementById('main-search');
+        const query = input.value.trim();
+        if(!query) return;
+
+        const userDiv = document.createElement('div');
+        userDiv.className = 'user-query-bubble';
+        userDiv.innerText = query;
+        area.appendChild(userDiv);
+
+        const ai = mimiAI(query);
+        input.value = "";
+
+        setTimeout(() => {
+            if(ai.found.length === 0) {
+                addBotMessage(`Sorry dear, Mimi couldn't find exactly that. But how about some Nasi Goreng? 🎀`, "🌸");
+            } else {
+                // RENDER MAP
+                const mapId = 'map-' + Date.now();
+                const mapDiv = document.createElement('div');
+                mapDiv.id = mapId;
+                mapDiv.className = 'map-container';
+                area.appendChild(mapDiv);
+
+                const map = L.map(mapId).setView([-6.2000, 106.8166], 13);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+                let msg = ai.flavorText ? `I found ${ai.flavorText}!` : `Here are the results for "${query}":`;
+                addBotMessage(msg + ` ✨`, "🌸");
+
+                // SORT BY CHEAPEST
+                ai.found.sort((a,b) => (a.base + a.fee) - (b.base + b.fee)).forEach((item, index) => {
+                    L.marker([-6.2000 + (index * 0.007), 106.8166 + (index * 0.007)])
+                     .addTo(map).bindPopup(`<b>${item.shop}</b>`);
+
+                    const total = item.base + item.fee;
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.innerHTML = `
+                        <div style="display:flex; justify-content:space-between">
+                            <div>
+                                <div style="font-weight:800; color:var(--hot-pink)">${item.shop}</div>
+                                <div style="font-size:0.8rem">${item.name} (⭐${item.rating})</div>
+                                <div style="font-size:0.65rem; color:#888">Base: ${item.base.toLocaleString()} + Fee: ${item.fee.toLocaleString()}</div>
+                            </div>
+                            <div class="total-price">Rp ${total.toLocaleString()}</div>
+                        </div>
+                        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:5px;">
+                            <div class="qty-wrapper">
+                                <button class="qty-btn" onclick="changeQty(this, -1, '${item.name}', '${item.shop}', '${query}')">-</button>
+                                <span class="qty-num">1</span>
+                                <button class="qty-btn" onclick="changeQty(this, 1, '${item.name}', '${item.shop}', '${query}')">+</button>
+                            </div>
+                            <button class="btn-order" onclick="initialOrder(this, '${item.name}', '${item.shop}', '${query}')">Order</button>
+                        </div>`;
+                    area.appendChild(card);
+                });
+            }
+            area.scrollTop = area.scrollHeight;
+        }, 600);
+    }
+
+    function initialOrder(btn, name, shop, note) {
+        btn.style.display = 'none';
+        btn.previousElementSibling.style.display = 'flex';
+        addToCartLogic(name, shop, note);
+        addBotMessage(`Noted your request: "<i>${note}</i>". Added to basket! 🛒`, "🌸");
+    }
+
+    function changeQty(btn, delta, name, shop, note) {
+        const span = btn.parentElement.querySelector('.qty-num');
+        let newVal = parseInt(span.innerText) + delta;
+        if (newVal < 1) {
+            btn.parentElement.style.display = 'none';
+            btn.parentElement.nextElementSibling.style.display = 'block';
+            removeFromCart(name, shop); return;
+        }
+        span.innerText = newVal;
+        if (delta > 0) addToCartLogic(name, shop, note); else removeFromCart(name, shop);
+    }
+
+    function addToCartLogic(name, shop, note) { pendingOrders.push({name, shop, note}); updateUI(); }
+    function removeFromCart(name, shop) {
+        const idx = pendingOrders.findLastIndex(o => o.name === shop && o.shop === shop);
+        pendingOrders.splice(idx, 1); updateUI();
+    }
+
+    function updateUI() {
+        document.getElementById('order-count').innerText = pendingOrders.length;
+        document.getElementById('send-final-container').style.display = pendingOrders.length > 0 ? 'block' : 'none';
+    }
+
+    async function finalizeOrder() {
+        const grouped = pendingOrders.reduce((acc, curr) => {
+            const key = `${curr.name} from ${curr.shop} (Note: ${curr.note})`;
+            acc[key] = (acc[key] || 0) + 1;
+            return acc;
+        }, {});
+        let summary = "New Order:\n" + Object.entries(grouped).map(([it, q]) => `- ${q}x ${it}`).join("\n");
+        const formData = new FormData();
+        formData.append('sender', 'Buyer');
+        formData.append('message', summary);
+        await fetch('api.php', { method: 'POST', body: formData });
+        addBotMessage("Sent! Your orders and notes are now with the seller. 🚀", "🌸");
+        pendingOrders = []; updateUI();
+    }
+
+    function showHistory() {
+        addBotMessage("Checking your past orders... 🎀", "🌸");
+        setTimeout(() => {
+            addBotMessage("<b>Order History:</b><br>- 1x Nasi Goreng (Spicy!)<br>- 2x Seblak Enjoy<br><br>Yum! Need more?", "🌸");
+        }, 800);
+    }
+
+    function quickSearch(v) { document.getElementById('main-search').value = v; runSearch(); }
+</script>
+</body>
+</html>
