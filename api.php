@@ -1,6 +1,6 @@
 <?php
 header('Content-Type: application/json');
-$conn = new mysqli("localhost", "root", "shil1234", "mimieats");
+$conn = new mysqli("localhost", "root", "", "mimieats");
 
 // Jika ada error koneksi
 if ($conn->connect_error) {
@@ -36,4 +36,5 @@ while($row = $result->fetch_assoc()) {
     $messages[] = $row;
 }
 echo json_encode($messages);
+
 ?>
